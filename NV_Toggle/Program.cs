@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+
 
 namespace NV_Toggle
 {
@@ -16,7 +14,12 @@ namespace NV_Toggle
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Main());
+
+            using (Main m = new Main())
+            {
+                m.Display();
+                Application.Run();
+            }
         }
     }
 }
