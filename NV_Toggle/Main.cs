@@ -49,7 +49,7 @@ namespace NV_Toggle
         {
             //Get the path to Nvidia broadcast
             RegistryKey hklm = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
-            NvPath = hklm.OpenSubKey("SOFTWARE\\NVIDIA Corporation\\Global\\NvBroadcast", false).GetValue("RBXAppPath", "").ToString().Replace("\\", "#");
+            NvPath = hklm.OpenSubKey("SOFTWARE\\NVIDIA Corporation\\Global\\NvBroadcast", false).GetValue("NvVirtualCameraPath", "").ToString().Replace("\\", "#");
 
             //Create the notification icon
             ni = new NotifyIcon();
@@ -99,27 +99,32 @@ namespace NV_Toggle
             EventBuffer.PerformAction();
         }
 
+        long previousLastUsedTimeStop = 0L;
         public void NvVoiceActive()
         {
             //Console.WriteLine("Registery changed");
             var LastUsedTimeStop = Registry.GetValue($"HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\microphone\\NonPackaged\\{NvPath}", "LastUsedTimeStop", null);
-            if (LastUsedTimeStop != null && (long)LastUsedTimeStop > 0)
+            if (previousLastUsedTimeStop != (long)LastUsedTimeStop)
             {
-                //Broadcast stopped using the microphone
-                if (NvVoicDenoiseeOn())
+                previousLastUsedTimeStop = (long)LastUsedTimeStop;
+                if (LastUsedTimeStop != null && (long)LastUsedTimeStop > 0)
                 {
-                    if (NvVoiceToggle())
-                        ni.ShowBalloonTip(3000, "NvPs","Turned denoise off", ToolTipIcon.None);
+                    //Broadcast stopped using the microphone
+                    if (NvVoicDenoiseeOn())
+                    {
+                        if (NvVoiceToggle())
+                            ni.ShowBalloonTip(3000, "NvPs", "Turned denoise off", ToolTipIcon.None);
+                    }
                 }
-            }
-            else
-            {
-                //Broadcast is using microphone
-                if (!NvVoicDenoiseeOn())
+                else
                 {
-                    if (NvVoiceToggle())
-                        ni.ShowBalloonTip(3000, "NvPs", "Turned denoise voice on", ToolTipIcon.None);
+                    //Broadcast is using microphone
+                    if (!NvVoicDenoiseeOn())
+                    {
+                        if (NvVoiceToggle())
+                            ni.ShowBalloonTip(3000, "NvPs", "Turned denoise voice on", ToolTipIcon.None);
 
+                    }
                 }
             }
         }
@@ -143,7 +148,7 @@ namespace NV_Toggle
         bool NvVoiceToggle()
         {
             var ps = Process.GetProcessesByName("NVIDIA Broadcast");
-            
+
             if (ps.Count() > 0)
             {
                 var hwnd = FindWindow("RTXVoiceWindowClass", null);
